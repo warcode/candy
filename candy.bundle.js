@@ -133,9 +133,13 @@ Candy.Core = (function(self, Strophe, $) {
 			self.addHandler(self.Event.Jabber.Presence, null, 'presence');
 			self.addHandler(self.Event.Jabber.Message, null, 'message');
 			self.addHandler(self.Event.Jabber.Bookmarks, Strophe.NS.PRIVATE, 'iq');
-			self.addHandler(self.Event.Jabber.Room.Disco, Strophe.NS.DISCO_INFO, 'iq');
+			self.addHandler(self.Event.Jabber.Room.Disco, Strophe.NS.DISCO_INFO, 'iq', 'result');
 			self.addHandler(self.Event.Jabber.PrivacyList, Strophe.NS.PRIVACY, 'iq', 'result');
 			self.addHandler(self.Event.Jabber.PrivacyListError, Strophe.NS.PRIVACY, 'iq', 'error');
+
+			self.addHandler(_connection.disco._onDiscoInfo.bind(_connection.disco), Strophe.NS.DISCO_INFO, 'iq', 'get');
+			self.addHandler(_connection.disco._onDiscoItems.bind(_connection.disco), Strophe.NS.DISCO_ITEMS, 'iq', 'get');
+			self.addHandler(_connection.caps._delegateCapabilities.bind(_connection.caps), Strophe.NS.CAPS);
 		};
 
 	/** Function: init
@@ -1153,7 +1157,7 @@ Candy.Core.Action = (function(self, Strophe, $) {
 		 *   (Object) attr - Optional attributes
 		 */
 		Presence: function(attr) {
-			Candy.Core.getConnection().send($pres(attr).tree());
+			Candy.Core.getConnection().send($pres(attr).c('c', Candy.Core.getConnection().caps.generateCapsAttrs()).tree());
 		},
 
 		/** Function: Services
@@ -1240,7 +1244,14 @@ Candy.Core.Action = (function(self, Strophe, $) {
 			 */
 			Join: function(roomJid, password) {
 				self.Jabber.Room.Disco(roomJid);
-				Candy.Core.getConnection().muc.join(roomJid, Candy.Core.getUser().getNick(), null, null, password);
+				//Candy.Core.getConnection().muc.join(roomJid, Candy.Core.getUser().getNick(), null, null, password);
+				console.log(Candy.Core.getUser().getNick());
+				var conn = Candy.Core.getConnection(),
+					room_nick = conn.muc.test_append_nick(roomJid, Candy.Core.getUser().getNick()),
+					pres = $pres({ from: conn.jid, to: room_nick })
+						.c('x', {xmlns: Strophe.NS.MUC}).up()
+						.c('c', conn.caps.generateCapsAttrs());
+				conn.send(pres.tree());
 			},
 
 			/** Function: Leave
