@@ -56,6 +56,7 @@ Candy.Core.Event = (function(self, Strophe, $, observable) {
 		 *   (Strophe.Status) status - Strophe statuses
 		 */
 		Connect: function(status) {
+			Candy.Core.setStropheStatus(status);
 			switch(status) {
 				case Strophe.Status.CONNECTED:
 					Candy.Core.log('[Connection] Connected');
@@ -149,6 +150,8 @@ Candy.Core.Event = (function(self, Strophe, $, observable) {
 				} else {
 					self.Jabber.Room.Presence(msg);
 				}
+			} else {
+				self.notifyObservers(self.KEYS.PRESENCE, {'from': msg.attr('from'), 'stanza': msg});
 			}
 			return true;
 		},
@@ -236,7 +239,7 @@ Candy.Core.Event = (function(self, Strophe, $, observable) {
 				type = msg.attr('type'),
 				toJid = msg.attr('to');
 			// Room message
-			if(fromJid !== Strophe.getDomainFromJid(fromJid) && (type === 'groupchat' || type === 'chat' || type === 'error')) {
+			if(fromJid !== Strophe.getDomainFromJid(fromJid) && (type === 'groupchat' || type === 'chat' || type === 'error' || type === 'normal')) {
 				self.Jabber.Room.Message(msg);
 			// Admin message
 			} else if(!toJid && fromJid === Strophe.getDomainFromJid(fromJid)) {
@@ -427,14 +430,14 @@ Candy.Core.Event = (function(self, Strophe, $, observable) {
 				// Error messsage
 				} else if(msg.attr('type') === 'error') {
 					var error = msg.children('error');
-					if(error.attr('code') === '500' && error.children('text').length > 0) {
+					if(error.children('text').length > 0) {
 						roomJid = msg.attr('from');
 						message = { type: 'info', body: error.children('text').text() };
 					}
 				// Chat message
 				} else if(msg.children('body').length > 0) {
 					// Private chat message
-					if(msg.attr('type') === 'chat') {
+					if(msg.attr('type') === 'chat' || msg.attr('type') === 'normal') {
 						roomJid = Candy.Util.unescapeJid(msg.attr('from'));
 						var bareRoomJid = Strophe.getBareJidFromJid(roomJid),
 							// if a 3rd-party client sends a direct message to this user (not via the room) then the username is the node and not the resource.
@@ -464,7 +467,7 @@ Candy.Core.Event = (function(self, Strophe, $, observable) {
 				var delay = msg.children('delay') ? msg.children('delay') : msg.children('x[xmlns="' + Strophe.NS.DELAY +'"]'),
 					timestamp = delay !== undefined ? delay.attr('stamp') : null;
 
-				self.notifyObservers(self.KEYS.MESSAGE, {roomJid: roomJid, message: message, timestamp: timestamp } );
+				self.notifyObservers(self.KEYS.MESSAGE, {roomJid: roomJid, message: message, timestamp: timestamp, stanza: msg } );
 				return true;
 			}
 		}
