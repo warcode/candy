@@ -721,7 +721,7 @@ Strophe = {
      *  The version of the Strophe library. Unreleased builds will have
      *  a version of head-HASH where HASH is a partial revision.
      */
-    VERSION: "b4b262b",
+    VERSION: "9933ced",
 
     /** Constants: XMPP Namespace Constants
      *  Common namespace constants from the XMPP RFCs and XEPs.
@@ -2777,12 +2777,10 @@ Strophe.Connection.prototype = {
 
         // Check for the stream:features tag
         var hasFeatures = elem.getElementsByTagName("stream:features").length > 0 || elem.nodeName === "stream:features";
-        console.log(hasFeatures);
         if (!hasFeatures) {
             hasFeatures = elem.getElementsByTagName("features").length > 0 || elem.nodeName == "features";
         }
         var mechanisms = elem.getElementsByTagName("mechanism");
-        console.log(mechanisms);
         var i, mech, auth_str, hashed_auth_str,
             found_authentication = false;
         if (hasFeatures && mechanisms.length > 0) {
@@ -4411,12 +4409,17 @@ Strophe.WebSocket.prototype = {
 	 */
     connect: function(connection) {
         if (!this.socket) {
-            this.connection = connection;
-            this.socket = new WebSocket(this.service, "xmpp");
-            this.socket.onopen = this._onOpen.bind(this);
-            this.socket.onerror = this._onError.bind(this);
-            this.socket.onclose = this._onClose.bind(this);
-            this.socket.onmessage = this._onMessage.bind(this);
+            try {
+                this.connection = connection;
+                var ws = 'MozWebSocket' in window ? window.MozWebSocket : window.WebSocket;
+                this.socket = new ws(this.service, "xmpp");
+                this.socket.onopen = this._onOpen.bind(this);
+                this.socket.onerror = this._onError.bind(this);
+                this.socket.onclose = this._onClose.bind(this);
+                this.socket.onmessage = this._onMessage.bind(this);
+            } catch(e) {
+                Strophe.log(e);
+            }
         }
     },
     
@@ -4433,7 +4436,7 @@ Strophe.WebSocket.prototype = {
     disconnect: function() {
         this.connection.xmlOutput(this._endStream());
         this.connection.rawOutput(this._endStream());
-        this.socket.send(this._endStream())
+        this.socket.send(this._endStream());
         this.socket.close();
         // Close the socket
     },
@@ -4471,7 +4474,7 @@ Strophe.WebSocket.prototype = {
      *    () error - The websocket error.
      */
     _onError: function(error) {
-        Strophe.log("Websocket error " + error)
+        Strophe.log("Websocket error " + error);
     },
 
     /** PrivateFunction: _onOpen
@@ -4490,8 +4493,8 @@ Strophe.WebSocket.prototype = {
      *
 	 */
     _onClose: function(event) {
-        Strophe.log("Websocket disconnected")
-        this.connection._doDisconnect()
+        Strophe.log("Websocket disconnected");
+        this.connection._doDisconnect();
     },
 
     /** PrivateFunction: _onError
