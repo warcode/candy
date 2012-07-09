@@ -721,7 +721,7 @@ Strophe = {
      *  The version of the Strophe library. Unreleased builds will have
      *  a version of head-HASH where HASH is a partial revision.
      */
-    VERSION: "9933ced",
+    VERSION: "0c04503",
 
     /** Constants: XMPP Namespace Constants
      *  Common namespace constants from the XMPP RFCs and XEPs.
@@ -4453,9 +4453,13 @@ Strophe.WebSocket.prototype = {
 	 *  Sends messages
 	 */
     send: function(msg) {
-        this.connection.xmlOutput(msg);
-        this.connection.rawOutput(Strophe.serialize(msg));
-        this.socket.send(Strophe.serialize(msg));
+    	try {
+        	this.connection.xmlOutput(msg);
+        	this.connection.rawOutput(Strophe.serialize(msg));
+        	this.socket.send(Strophe.serialize(msg));
+    	} catch(e) {
+    		Strophe.error(e);
+    	}
     },
 
     /** Function: restart
