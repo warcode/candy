@@ -172,9 +172,9 @@ Candy.Core = (function(self, Strophe, $) {
 		_addNamespaces();
 		// Connect to BOSH/WebSocket service
 		if (_options.websocket !== "" && (window.WebSocket || window.MozWebSocket)) {
-			_connection = new Strophe.Connection({protocol: new Strophe.WebSocket(_options.websocket)});
+			_connection = new Strophe.Connection(_options.websocket);
 		} else {
-			_connection = new Strophe.Connection({protocol: new Strophe.Bosh(_service)});
+			_connection = new Strophe.Connection(_service);
 		}
 		_connection.rawInput = self.rawInput.bind(self);
 		_connection.rawOutput = self.rawOutput.bind(self);
