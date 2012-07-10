@@ -721,7 +721,7 @@ Strophe = {
      *  The version of the Strophe library. Unreleased builds will have
      *  a version of head-HASH where HASH is a partial revision.
      */
-    VERSION: "0c04503",
+    VERSION: "719ce35",
 
     /** Constants: XMPP Namespace Constants
      *  Common namespace constants from the XMPP RFCs and XEPs.
@@ -4216,9 +4216,9 @@ Strophe.Bosh.prototype = {
                 if (cond == "remote-stream-error" && conflict.length > 0) {
                     cond = "conflict";
                 }
-                this._changeConnectStatus(Strophe.Status.CONNFAIL, cond);
+                this.connection._changeConnectStatus(Strophe.Status.CONNFAIL, cond);
             } else {
-                this._changeConnectStatus(Strophe.Status.CONNFAIL, "unknown");
+                this.connection._changeConnectStatus(Strophe.Status.CONNFAIL, "unknown");
             }
             return;
         }
