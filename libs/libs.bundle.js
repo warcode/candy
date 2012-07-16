@@ -721,7 +721,7 @@ Strophe = {
      *  The version of the Strophe library. Unreleased builds will have
      *  a version of head-HASH where HASH is a partial revision.
      */
-    VERSION: "719ce35",
+    VERSION: "623ecc2",
 
     /** Constants: XMPP Namespace Constants
      *  Common namespace constants from the XMPP RFCs and XEPs.
@@ -4514,13 +4514,23 @@ Strophe.WebSocket.prototype = {
      *    (string) message - The websocket message.
      */
     _onMessage: function(message) {
-        // Ugly hack to deal with the problem of stream ns undefined,
-        var string = message.data.replace("<stream:features>", "<stream:features xmlns:stream='http://etherx.jabber.org/streams'>"),
-        string = string.replace("<stream:error>", "<stream:error xmlns:stream='http://etherx.jabber.org/streams'>"),
-        elem = Strophe.xmlHtmlNode(string).documentElement;
+	// Ugly hack to deal with the problem of stream ns undefined,
+	if (message.data === "</stream:stream>") {
+		var close = "</stream:stream>";
+		this.connection.rawInput(close);
+		this.connection.xmlInput(document.createElement("stream:stream"));
+		if (!this.connection.disconnecting) {
+			this.connection._doDisconnect();
+		}
+		return;
+	}
+	var string = message.data.replace(/<stream:([a-z]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");
+	string = string.replace(/<stream:stream (.*[^/])>/, "<stream:stream $1/>");
+        var elem = Strophe.xmlHtmlNode(string).documentElement;
 
         this.connection.xmlInput(elem);
         this.connection.rawInput(Strophe.serialize(elem));
+
 
         if (elem.nodeName == "stream:stream") {
             // Let's just skip this.
@@ -4542,7 +4552,7 @@ Strophe.WebSocket.prototype = {
     },
 
     _startStream: function() {
-        return "<stream:stream to='" + this.connection.domain + "' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0' />";
+        return "<?xml version='1.0'?><stream:stream to='" + this.connection.domain + "' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'  xml:lang='en' xmlns:xml='http://www.w3.org/XML/1998/namespace'>";
     },
 
     _endStream: function() {
