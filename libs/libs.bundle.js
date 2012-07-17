@@ -721,7 +721,7 @@ Strophe = {
      *  The version of the Strophe library. Unreleased builds will have
      *  a version of head-HASH where HASH is a partial revision.
      */
-    VERSION: "e6a7b83",
+    VERSION: "518496c",
 
     /** Constants: XMPP Namespace Constants
      *  Common namespace constants from the XMPP RFCs and XEPs.
@@ -2061,11 +2061,11 @@ Strophe.Connection = function (service)
     this.addHandlers = [];
 
     this._authentication = {};
-/* TODO: Check if this is needed
+
     // setup onIdle callback every 1/10th of a second
     this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
     this._disconnectTimeout = null;
-*/
+
 
     this.do_authentication = true;
     this.authenticated = false;
@@ -2397,7 +2397,11 @@ Strophe.Connection.prototype = {
      */
     flush: function ()
     {
+	    // cancel the pending idle period and run the idle function
+	    // immediately
+	    clearTimeout(this._idleTimeout);
         this.protocol.flush();
+	    this._onIdle();
     },
 
     /** Function: sendIQ
@@ -2496,6 +2500,8 @@ Strophe.Connection.prototype = {
     _sendRestart: function ()
     {
         this.protocol.restart();
+	    clearTimeout(this._idleTimeout);
+	    this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
     },
 
     /** Function: addTimedHandler
@@ -3458,6 +3464,61 @@ Strophe.Connection.prototype = {
 
         return false;
     },
+
+
+	/** PrivateFunction: _onIdle
+	 *  _Private_ handler to process events during idle cycle.
+	 *
+	 *  This handler is called every 100ms to fire timed handlers that
+	 *  are ready and keep poll requests going.
+	 */
+	_onIdle: function ()
+	{
+		var i, thand, since, newList;
+
+		// add timed handlers scheduled for addition
+		// NOTE: we add before remove in the case a timed handler is
+		// added and then deleted before the next _onIdle() call.
+		while (this.addTimeds.length > 0) {
+			this.timedHandlers.push(this.addTimeds.pop());
+		}
+
+		// remove timed handlers that have been scheduled for deletion
+		while (this.removeTimeds.length > 0) {
+			thand = this.removeTimeds.pop();
+			i = this.timedHandlers.indexOf(thand);
+			if (i >= 0) {
+				this.timedHandlers.splice(i, 1);
+			}
+		}
+
+		// call ready timed handlers
+		var now = new Date().getTime();
+		newList = [];
+		for (i = 0; i < this.timedHandlers.length; i++) {
+			thand = this.timedHandlers[i];
+			if (this.authenticated || !thand.user) {
+				since = thand.lastCalled + thand.period;
+				if (since - now <= 0) {
+					if (thand.run()) {
+						newList.push(thand);
+					}
+				} else {
+					newList.push(thand);
+				}
+			}
+		}
+		this.timedHandlers = newList;
+
+		this.protocol._onIdle();
+
+		clearTimeout(this._idleTimeout);
+
+		// reactivate the timer only if connected
+		if (this.connected) {
+			this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
+		}
+	},
     
     /** PrivateFunction: _throttleStanzas
 	*  _Private_ function to throttle stanzas sent to the protocol.
@@ -3470,7 +3531,7 @@ Strophe.Connection.prototype = {
 
 	*/
 	_throttleStanzas: function () {
-		stanza = this._stanzas.shift();
+		var stanza = this._stanzas.shift();
 		if(stanza) {
 			this.protocol.send(stanza);
 		}
@@ -4266,130 +4327,73 @@ Strophe.Bosh.prototype = {
         }
         
     },
-    
-    
-    /** PrivateFunction: _onIdle
-     *  _Private_ handler to process events during idle cycle.
-     *
-     *  This handler is called every 100ms to fire timed handlers that
-     *  are ready and keep poll requests going.
-     */
-    _onIdle: function ()
-    {
-        var i, thand, since, newList;
 
-        // add timed handlers scheduled for addition
-        // NOTE: we add before remove in the case a timed handler is
-        // added and then deleted before the next _onIdle() call.
-        while (this.connection.addTimeds.length > 0) {
-            this.connection.timedHandlers.push(this.connection.addTimeds.pop());
-        }
+	_onIdle: function() {
+		var body, time_elapsed;
 
-        // remove timed handlers that have been scheduled for deletion
-        while (this.connection.removeTimeds.length > 0) {
-            thand = this.connection.removeTimeds.pop();
-            i = this.connection.timedHandlers.indexOf(thand);
-            if (i >= 0) {
-                this.connection.timedHandlers.splice(i, 1);
-            }
-        }
+		// if no requests are in progress, poll
+		if (this.connection.authenticated && this._requests.length === 0 &&
+			this._data.length === 0 && !this.connection.disconnecting) {
+			Strophe.info("no requests during idle cycle, sending " +
+				"blank request");
+			this._data.push(null);
+		}
 
-        // call ready timed handlers
-        var now = new Date().getTime();
-        newList = [];
-        for (i = 0; i < this.connection.timedHandlers.length; i++) {
-            thand = this.connection.timedHandlers[i];
-            if (this.connection.authenticated || !thand.user) {
-                since = thand.lastCalled + thand.period;
-                if (since - now <= 0) {
-                    if (thand.run()) {
-                        newList.push(thand);
-                    }
-                } else {
-                    newList.push(thand);
-                }
-            }
-        }
-        this.connection.timedHandlers = newList;
+		if (this._requests.length < 2 && this._data.length > 0 &&
+			!this.connection.paused) {
+			body = this._buildBody();
+			for (i = 0; i < this._data.length; i++) {
+				if (this._data[i] !== null) {
+					if (this._data[i] === "restart") {
+						body.attrs({
+							to: this.connection.domain,
+							"xml:lang": "en",
+							"xmpp:restart": "true",
+							"xmlns:xmpp": Strophe.NS.BOSH
+						});
+					} else {
+						body.cnode(this._data[i]).up();
+					}
+				}
+			}
+			delete this._data;
+			this._data = [];
+			this._requests.push(
+				new Strophe.Request(body.tree(),
+					this._onRequestStateChange.bind(
+						this, this._dataRecv.bind(this)),
+					body.tree().getAttribute("rid")));
+			this._processRequest(this._requests.length - 1);
+		}
 
-        var body, time_elapsed;
+		if (this._requests.length > 0) {
+			time_elapsed = this._requests[0].age();
+			if (this._requests[0].dead !== null) {
+				if (this._requests[0].timeDead() >
+					Math.floor(Strophe.SECONDARY_TIMEOUT * this.wait)) {
+					this._throttledRequestHandler();
+				}
+			}
 
-        // if no requests are in progress, poll
-        if (this.connection.authenticated && this._requests.length === 0 &&
-            this._data.length === 0 && !this.connection.disconnecting) {
-            Strophe.info("no requests during idle cycle, sending " +
-                         "blank request");
-            this._data.push(null);
-        }
-
-        if (this._requests.length < 2 && this._data.length > 0 &&
-            !this.connection.paused) {
-            body = this._buildBody();
-            for (i = 0; i < this._data.length; i++) {
-                if (this._data[i] !== null) {
-                    if (this._data[i] === "restart") {
-                        body.attrs({
-                            to: this.connection.domain,
-                            "xml:lang": "en",
-                            "xmpp:restart": "true",
-                            "xmlns:xmpp": Strophe.NS.BOSH
-                        });
-                    } else {
-                        body.cnode(this._data[i]).up();
-                    }
-                }
-            }
-            delete this._data;
-            this._data = [];
-            this._requests.push(
-                new Strophe.Request(body.tree(),
-                                    this._onRequestStateChange.bind(
-                                        this, this._dataRecv.bind(this)),
-                                    body.tree().getAttribute("rid")));
-            this._processRequest(this._requests.length - 1);
-        }
-
-        if (this._requests.length > 0) {
-            time_elapsed = this._requests[0].age();
-            if (this._requests[0].dead !== null) {
-                if (this._requests[0].timeDead() >
-                    Math.floor(Strophe.SECONDARY_TIMEOUT * this.wait)) {
-                    this._throttledRequestHandler();
-                }
-            }
-
-            if (time_elapsed > Math.floor(Strophe.TIMEOUT * this.wait)) {
-                Strophe.warn("Request " +
-                             this._requests[0].id +
-                             " timed out, over " + Math.floor(Strophe.TIMEOUT * this.wait) +
-                             " seconds since last activity");
-                this._throttledRequestHandler();
-            }
-        }
-
-        clearTimeout(this._idleTimeout);
-
-        // reactivate the timer only if connected
-        if (this.connection.connected) {
-            this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
-        }
-    },
+			if (time_elapsed > Math.floor(Strophe.TIMEOUT * this.wait)) {
+				Strophe.warn("Request " +
+					this._requests[0].id +
+					" timed out, over " + Math.floor(Strophe.TIMEOUT * this.wait) +
+					" seconds since last activity");
+				this._throttledRequestHandler();
+			}
+		}
+	},
     
     restart: function()
     {
         this._data.push("restart");
 
         this._throttledRequestHandler();
-        clearTimeout(this._idleTimeout);
-        this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
     },
     
     flush: function()
     {
-        // cancel the pending idle period and run the idle function
-        // immediately
-        clearTimeout(this._idleTimeout);
-        this._onIdle();
     }
 };Strophe.WebSocket = function(service)
  {
@@ -4397,32 +4401,40 @@ Strophe.Bosh.prototype = {
     this.connection = null;
     this.service = service;
 
+    this._keepAliveTimer = 20000;
+
     // Requests stack.
     this._requests = [];
 };
 
 Strophe.WebSocket.prototype = {
 
-    /** Function connect 
-	 *  Connects to the server using websockets.
-	 *  It also assigns the connection to this proto
-	 */
+    /** Function connect
+     *  Connects to the server using websockets.
+     *  It also assigns the connection to this proto
+     */
     connect: function(connection) {
         if (!this.socket) {
             try {
                 this.connection = connection;
-                var ws = 'MozWebSocket' in window ? window.MozWebSocket : window.WebSocket;
-                this.socket = new ws(this.service, "xmpp");
-                this.socket.onopen = this._onOpen.bind(this);
-                this.socket.onerror = this._onError.bind(this);
-                this.socket.onclose = this._onClose.bind(this);
-                this.socket.onmessage = this._onMessage.bind(this);
+                this._openWebsocket();
             } catch(e) {
                 Strophe.log(e);
             }
         }
     },
-    
+
+    _openWebsocket: function(onMessageCallback){
+        var ws = 'MozWebSocket' in window ? window.MozWebSocket : window.WebSocket;
+        this.socket = new ws(this.service, "xmpp");
+        this.socket.onopen = this._onOpen.bind(this);
+        this.socket.onerror = this._onError.bind(this);
+        this.socket.onclose = this._onClose.bind(this);
+        this.socket.onmessage = onMessageCallback ? onMessageCallback.bind(this) : this._onMessage.bind(this);
+
+        this.connection._addSysTimedHandler(this._keepAliveTimer, this._keepAliveHandler.bind(this));
+    },
+
     /** Function: reset
      *  Reset WebSocket
      */
@@ -4431,35 +4443,46 @@ Strophe.WebSocket.prototype = {
     },
 
     /** Function disconnect 
-	 *  Disconnects from the server
-	 */
+     *  Disconnects from the server
+     */
     disconnect: function() {
         this.connection.xmlOutput(this._endStream());
         this.connection.rawOutput(this._endStream());
         this.socket.send(this._endStream());
-        this.socket.close();
         // Close the socket
+        this.socket.close();
     },
 
     /** Function _doDisconnect 
-	 *  Finishes the connection. It's the last step in the cleanup process.
-	 */
+     *  Finishes the connection. It's the last step in the cleanup process.
+     */
     _doDisconnect: function() {
-        this.socket = null;
+        if (this.socket.readyState != this.socket.CLOSED) {
+            this.socket.close();
+        }
         // Makes sure we delete the socket.
+        this.socket = null;
+    },
+
+    _keepAliveHandler: function() {
+        this.socket.send("\n");
+        return true;
     },
 
     /** Function send 
-	 *  Sends messages
-	 */
+     *  Sends messages
+     */
     send: function(msg) {
-    	try {
-        	this.connection.xmlOutput(msg);
-        	this.connection.rawOutput(Strophe.serialize(msg));
-        	this.socket.send(Strophe.serialize(msg));
-    	} catch(e) {
-    		Strophe.error(e);
-    	}
+        try {
+            this.connection.xmlOutput(msg);
+            this.connection.rawOutput(Strophe.serialize(msg));
+            this.socket.send(Strophe.serialize(msg));
+
+            clearTimeout(this._idleTimeout);
+            this._idleTimeout = setTimeout(this._onIdle.bind(this), 100);
+        } catch(e) {
+            Strophe.error(e);
+        }
     },
 
     /** Function: restart
@@ -4478,7 +4501,7 @@ Strophe.WebSocket.prototype = {
      *    () error - The websocket error.
      */
     _onError: function(error) {
-        Strophe.log("Websocket error " + error);
+        Strophe.error("Websocket error: " + error);
     },
 
     /** PrivateFunction: _onOpen
@@ -4486,7 +4509,7 @@ Strophe.WebSocket.prototype = {
      *
      */
     _onOpen: function() {
-        Strophe.log("Websocket open")
+        Strophe.log("Websocket open");
         this.connection.xmlOutput(this._startStream());
         this.connection.rawOutput(this._startStream());
         this.socket.send(this._startStream());
@@ -4495,43 +4518,36 @@ Strophe.WebSocket.prototype = {
     /** PrivateFunction: _onClose
      *  _Private_ function to handle websockets closing.
      *
-	 */
+     */
     _onClose: function(event) {
         Strophe.log("Websocket disconnected");
         this.connection._doDisconnect();
     },
 
-    /** PrivateFunction: _onError
+    /** PrivateFunction: _onMessage
      *  _Private_ function to handle websockets messages.
      *
-	 *  This function parses each of the messages as if they are full documents. [TODO : We may actually want to use a SAX Push parser].
-	 *  
-	 *  Since all XMPP traffic starts with "<stream:stream version='1.0' xml:lang='en' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' id='3697395463' from='SERVER'>"
-	 *  The first stanza will always fail to be parsed...
-	 *  Addtionnaly, the seconds stanza will always be a <stream:features> with the stream NS defined in the previous stanza... so we need to 'force' the inclusion of the NS in this stanza!
-     * 
-	 *  Parameters:
+     *  This function parses each of the messages as if they are full documents. [TODO : We may actually want to use a SAX Push parser].
+     *
+     *  Since all XMPP traffic starts with "<stream:stream version='1.0' xml:lang='en' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' id='3697395463' from='SERVER'>"
+     *  The first stanza will always fail to be parsed...
+     *  Addtionnaly, the seconds stanza will always be a <stream:features> with the stream NS defined in the previous stanza... so we need to 'force' the inclusion of the NS in this stanza!
+     *
+     *  Parameters:
      *    (string) message - The websocket message.
      */
     _onMessage: function(message) {
         // Ugly hack to deal with the problem of stream ns undefined,
         if (message.data === "</stream:stream>") {
-        	var close = "</stream:stream>";
-        	this.connection.rawInput(close);
-        	this.connection.xmlInput(document.createElement("stream:stream"));
-        	if (!this.connection.disconnecting) {
-        		this.connection._doDisconnect();
-        	}
-        	return;
+            var close = "</stream:stream>";
+            this.connection.rawInput(close);
+            this.connection.xmlInput(document.createElement("stream:stream"));
+            if (!this.connection.disconnecting) {
+                this.connection._doDisconnect();
+            }
+            return;
         }
-        var string = message.data.replace(/<stream:([a-z]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");
-        string = string.replace(/<stream:stream (.*[^/])>/, "<stream:stream $1/>");
-        var elem = Strophe.xmlHtmlNode(string).documentElement;
-
-        this.connection.xmlInput(elem);
-        this.connection.rawInput(Strophe.serialize(elem));
-
-
+        var elem = this._prepareAndLogMessage(message);
         if (elem.nodeName == "stream:stream") {
             // Let's just skip this.
         }
@@ -4542,13 +4558,27 @@ Strophe.WebSocket.prototype = {
             this.connection.receiveData(elem);
         }
     },
-    
+
+    _prepareAndLogMessage: function (message) {
+        var string = message.data.replace(/<stream:([a-z]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");
+        string = string.replace(/<stream:stream (.*[^\/])>/, "<stream:stream $1/>");
+        var elem = Strophe.xmlHtmlNode(string).documentElement;
+
+        this.connection.xmlInput(elem);
+        this.connection.rawInput(Strophe.serialize(elem));
+        return elem;
+    },
+
     authenticationNotFound: function(callback) {
     },
-    
+
     _connect_cb: function (elem, _callback)
     {
         this.connection._connect_cb(elem);
+    },
+
+    _onIdle: function() {
+
     },
 
     _startStream: function() {
@@ -4560,7 +4590,6 @@ Strophe.WebSocket.prototype = {
     }
 
 };
-	
 
 /*
  *Plugin to implement the MUC extension.
