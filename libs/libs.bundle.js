@@ -721,7 +721,7 @@ Strophe = {
      *  The version of the Strophe library. Unreleased builds will have
      *  a version of head-HASH where HASH is a partial revision.
      */
-    VERSION: "623ecc2",
+    VERSION: "e6a7b83",
 
     /** Constants: XMPP Namespace Constants
      *  Common namespace constants from the XMPP RFCs and XEPs.
@@ -4514,18 +4514,18 @@ Strophe.WebSocket.prototype = {
      *    (string) message - The websocket message.
      */
     _onMessage: function(message) {
-	// Ugly hack to deal with the problem of stream ns undefined,
-	if (message.data === "</stream:stream>") {
-		var close = "</stream:stream>";
-		this.connection.rawInput(close);
-		this.connection.xmlInput(document.createElement("stream:stream"));
-		if (!this.connection.disconnecting) {
-			this.connection._doDisconnect();
-		}
-		return;
-	}
-	var string = message.data.replace(/<stream:([a-z]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");
-	string = string.replace(/<stream:stream (.*[^/])>/, "<stream:stream $1/>");
+        // Ugly hack to deal with the problem of stream ns undefined,
+        if (message.data === "</stream:stream>") {
+        	var close = "</stream:stream>";
+        	this.connection.rawInput(close);
+        	this.connection.xmlInput(document.createElement("stream:stream"));
+        	if (!this.connection.disconnecting) {
+        		this.connection._doDisconnect();
+        	}
+        	return;
+        }
+        var string = message.data.replace(/<stream:([a-z]*)>/, "<stream:$1 xmlns:stream='http://etherx.jabber.org/streams'>");
+        string = string.replace(/<stream:stream (.*[^/])>/, "<stream:stream $1/>");
         var elem = Strophe.xmlHtmlNode(string).documentElement;
 
         this.connection.xmlInput(elem);
