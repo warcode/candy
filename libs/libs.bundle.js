@@ -721,7 +721,7 @@ Strophe = {
      *  The version of the Strophe library. Unreleased builds will have
      *  a version of head-HASH where HASH is a partial revision.
      */
-    VERSION: "518496c",
+    VERSION: "fef23b1",
 
     /** Constants: XMPP Namespace Constants
      *  Common namespace constants from the XMPP RFCs and XEPs.
@@ -4457,7 +4457,7 @@ Strophe.WebSocket.prototype = {
      *  Finishes the connection. It's the last step in the cleanup process.
      */
     _doDisconnect: function() {
-        if (this.socket.readyState != this.socket.CLOSED) {
+        if (this.socket && this.socket.readyState != this.socket.CLOSED) {
             this.socket.close();
         }
         // Makes sure we delete the socket.
