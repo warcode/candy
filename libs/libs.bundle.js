@@ -721,7 +721,7 @@ Strophe = {
      *  The version of the Strophe library. Unreleased builds will have
      *  a version of head-HASH where HASH is a partial revision.
      */
-    VERSION: "102612e",
+    VERSION: "6ecb1b2",
 
     /** Constants: XMPP Namespace Constants
      *  Common namespace constants from the XMPP RFCs and XEPs.
@@ -4525,7 +4525,7 @@ Strophe.WebSocket.prototype = {
         Strophe.log("Websocket disconnected");
         this.connection._doDisconnect();
 		// in case the connection hasn't been setup correctly yet and therefore the check in _doDisconnect with this.connected fails
-		this.conncetion._changeConnectStatus(Strophe.Status.DISCONNECTED);
+		this.connection._changeConnectStatus(Strophe.Status.DISCONNECTED);
     },
 
     /** PrivateFunction: _onMessage
