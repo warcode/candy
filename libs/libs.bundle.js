@@ -721,7 +721,7 @@ Strophe = {
      *  The version of the Strophe library. Unreleased builds will have
      *  a version of head-HASH where HASH is a partial revision.
      */
-    VERSION: "6ecb1b2",
+    VERSION: "47ae128",
 
     /** Constants: XMPP Namespace Constants
      *  Common namespace constants from the XMPP RFCs and XEPs.
@@ -3962,7 +3962,8 @@ Strophe.Bosh.prototype = {
                           "." + req.sends + " posting");
 
             try {
-                req.xhr.open("POST", this.service, true);
+				var async = !('sync' in this && this.sync === true);
+                req.xhr.open("POST", this.service, async);
             } catch (e2) {
                 Strophe.error("XHR open failed.");
                 if (!this.connection.connected) {
@@ -4395,7 +4396,8 @@ Strophe.Bosh.prototype = {
     flush: function()
     {
     }
-};Strophe.WebSocket = function(service)
+};
+Strophe.WebSocket = function(service)
  {
     // Connection
     this.connection = null;
