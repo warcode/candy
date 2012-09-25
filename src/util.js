@@ -536,7 +536,9 @@ Candy.Util.Observable = (function(self) {
 	self.notifyObservers = function(key, arg) {
 		var observer = _observers[key], i;
 		for(i = observer.length-1; i >= 0; i--) {
-			observer[i].update(self, arg);
+			if (observer[i]) {
+				observer[i].update(self, arg);
+			}
 		}
 	};
 
