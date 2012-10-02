@@ -721,7 +721,7 @@ Strophe = {
      *  The version of the Strophe library. Unreleased builds will have
      *  a version of head-HASH where HASH is a partial revision.
      */
-    VERSION: "9a4b4f1",
+    VERSION: "4a38d81",
 
     /** Constants: XMPP Namespace Constants
      *  Common namespace constants from the XMPP RFCs and XEPs.
@@ -1481,7 +1481,7 @@ Strophe = {
         var nodeName = elem.nodeName;
         var i, child;
 
-        if (elem.getAttribute && elem.getAttribute("_realname")) {
+        if (elem.getAttribute("_realname")) {
             nodeName = elem.getAttribute("_realname");
         }
 
