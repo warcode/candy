@@ -721,7 +721,7 @@ Strophe = {
      *  The version of the Strophe library. Unreleased builds will have
      *  a version of head-HASH where HASH is a partial revision.
      */
-    VERSION: "47ae128",
+    VERSION: "9a4b4f1",
 
     /** Constants: XMPP Namespace Constants
      *  Common namespace constants from the XMPP RFCs and XEPs.
@@ -3569,8 +3569,7 @@ if (callback) {
  *    (Integer) sends - The number of times this same request has been
  *      sent.
  */
-Strophe.Request = function (elem, func, rid, sends)
-{
+Strophe.Request = function (elem, func, rid, sends) {
     this.id = ++Strophe._requestId;
     this.xmlData = elem;
     this.data = Strophe.serialize(elem);
@@ -3749,7 +3748,6 @@ Strophe.Bosh.prototype = {
 	 *    (String) route
      */
     connect: function(connection, callback, wait, hold, route) {
-		console.log("bosh connect");
         this.connection = connection;
         
         this.wait = wait || this.wait;
@@ -4259,7 +4257,6 @@ Strophe.Bosh.prototype = {
     
     _connect_cb: function (req, _callback)
     {
-		console.log("BOSH CONNNNECT CB");
         var bodyWrap = req.getResponse();
         if (!bodyWrap) { return; }
 
@@ -4528,7 +4525,7 @@ Strophe.WebSocket.prototype = {
      */
     _onClose: function(event) {
         Strophe.log("Websocket disconnected");
-		// check if we're still here
+		// check if we're still using websocket protocol and not some fancy fallback mechanism has chosen another one
 		if (this.connection.protocol instanceof Strophe.WebSocket) {
 			this.connection._doDisconnect();
 			// in case the connection hasn't been setup correctly yet and therefore the check in _doDisconnect with this.connected fails
