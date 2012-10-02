@@ -1481,7 +1481,7 @@ Strophe = {
         var nodeName = elem.nodeName;
         var i, child;
 
-        if (elem.getAttribute("_realname")) {
+        if (elem.getAttribute && elem.getAttribute("_realname")) {
             nodeName = elem.getAttribute("_realname");
         }
 
@@ -3749,6 +3749,7 @@ Strophe.Bosh.prototype = {
 	 *    (String) route
      */
     connect: function(connection, callback, wait, hold, route) {
+		console.log("bosh connect");
         this.connection = connection;
         
         this.wait = wait || this.wait;
@@ -4258,6 +4259,7 @@ Strophe.Bosh.prototype = {
     
     _connect_cb: function (req, _callback)
     {
+		console.log("BOSH CONNNNECT CB");
         var bodyWrap = req.getResponse();
         if (!bodyWrap) { return; }
 
@@ -4386,15 +4388,13 @@ Strophe.Bosh.prototype = {
 		}
 	},
     
-    restart: function()
-    {
+    restart: function() {
         this._data.push("restart");
 
         this._throttledRequestHandler();
     },
     
-    flush: function()
-    {
+    flush: function() {
     }
 };
 Strophe.WebSocket = function(service)
@@ -4440,9 +4440,12 @@ Strophe.WebSocket.prototype = {
     /** Function: reset
      *  Reset WebSocket
      */
-    reset: function()
-    {
+    reset: function() {
+		this.socket = null;
     },
+
+	flush: function() {
+	},
 
     /** Function disconnect 
      *  Disconnects from the server
@@ -4525,9 +4528,12 @@ Strophe.WebSocket.prototype = {
      */
     _onClose: function(event) {
         Strophe.log("Websocket disconnected");
-        this.connection._doDisconnect();
-		// in case the connection hasn't been setup correctly yet and therefore the check in _doDisconnect with this.connected fails
-		this.connection._changeConnectStatus(Strophe.Status.DISCONNECTED);
+		// check if we're still here
+		if (this.connection.protocol instanceof Strophe.WebSocket) {
+			this.connection._doDisconnect();
+			// in case the connection hasn't been setup correctly yet and therefore the check in _doDisconnect with this.connected fails
+			this.connection._changeConnectStatus(Strophe.Status.DISCONNECTED);
+		}
     },
 
     /** PrivateFunction: _onMessage
