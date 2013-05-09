@@ -81,6 +81,7 @@ Candy.Core = (function(self, Strophe, $) {
 			_addNamespace('BOOKMARKS', 'storage:bookmarks');
 			_addNamespace('PRIVACY', 'jabber:iq:privacy');
 			_addNamespace('DELAY', 'jabber:x:delay');
+            		_addNamespace('VCARD', 'vcard-temp');
 		},
 
 		_getEscapedJidFromJid = function(jid) {
