@@ -30,7 +30,20 @@ Candy.Core.Action = (function(self, Strophe, $) {
 		 *   (jQuery.element) msg - jQuery element
 		 */
 		Version: function(msg) {
-			Candy.Core.getConnection().send($iq({type: 'result', to: msg.attr('from'), from: msg.attr('to'), id: msg.attr('id')}).c('query', {name: Candy.about.name, version: Candy.about.version, os: navigator.userAgent}));
+			//Candy.Core.getConnection().send($iq({type: 'result', to: msg.attr('from'), from: msg.attr('to'), id: msg.attr('id')}).c('query', {name: Candy.about.name, version: Candy.about.version, os: navigator.userAgent }));
+			//Candy.Core.getConnection().send($iq({type: 'result', to: msg.attr('from'), from: msg.attr('to'), id: msg.attr('id')}).c('query', {xmlns: 'jabber:iq:version'}).c('name', {Candy.about.name}).c('version', {Candy.about.version}).c('os', {navigator.userAgent}));
+			if(msg.attr('type') == 'get') {
+				var stanza = $iq({type: 'result', to: msg.attr('from'), from: msg.attr('to'), id: msg.attr('id')})
+				.c('query', {xmlns: 'jabber:iq:version'})
+				.c('name', Candy.about.name)
+				.up()
+				.c('version', Candy.about.version)
+				.up()
+				.c('os', navigator.userAgent)
+				.up()
+				.c('photo', 'test');
+				Candy.Core.getConnection().send(stanza);
+			}
 		},
 
 		/** Function: Roster

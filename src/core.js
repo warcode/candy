@@ -125,14 +125,6 @@ Candy.Core = (function(self, Strophe, $) {
 			window.onbeforeunload = self.onWindowUnload;
 		}
 
-		// Prevent Firefox from aborting AJAX requests when pressing ESC
-		if($.browser.mozilla) {
-			$(document).keydown(function(e) {
-				if(e.which === 27) {
-					e.preventDefault();
-				}
-			});
-		}
 	};
 
 	/** Function: registerEventHandlers
