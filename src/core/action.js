@@ -71,6 +71,7 @@ Candy.Core.Action = function (self, Strophe, $) {
                 Candy.Core.log("VCard - result");
                 var avatars = Candy.Core.getUser().getCustomData()['avatar'];
                 avatars[msg.attr('from')] = msg.find("vCard").find('BINVAL').text();
+                Candy.Core.getUser().setCustomData(avatars);
             }
 
         },
