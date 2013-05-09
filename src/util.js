@@ -31,6 +31,22 @@ Candy.Util = (function(self, $){
 		return MD5.hexdigest(jid);
 	};
 
+    self.base64Image = function (url) {
+        var d = $.Deferred(),
+            img = new Image();
+        $(img).error(d.reject);
+        $(img).load(function () {
+            var ctx,
+                canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            d.resolve(canvas.toDataURL('image/png'));
+        }).attr('src', url);
+        return d.promise();
+    };
+
 	/** Function: escapeJid
 	 * Escapes a jid (node & resource get escaped)
 	 *

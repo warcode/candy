@@ -46,10 +46,17 @@ Candy.Core.Action = function (self, Strophe, $) {
         },
 
         VCard: function (msg) {
-            Console.log(msg);
+
             if (msg.attr('type') == 'get') {
+                alert("avatar-get");
+                alert(Candy.Core.getUser().getJid());
                 var avatar = Candy.Core.getUser().getCustomData()['avatar'][Candy.Core.getUser().getJid()];
                 alert(avatar);
+                if(avatar == null)
+                {
+                    var localAvatars = Candy.Core.getUser().getCustomData()['avatar'];
+                    localAvatars[Candy.Core.getUser().getJid()] = Candy.Util.base64Image('https://deny.io/chat/hakase80x80.jpg');
+                }
                 var vcardOut = $iq({type: 'result', to: msg.attr('from'), from: Candy.Core.getUser().getJid(), id: msg.attr('id'), xmlns: 'jabber:client'})
                     .c('vCard', {xmlns: 'vcard-temp', version: '2.0'})
                     .c('PHOTO')
