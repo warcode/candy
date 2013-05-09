@@ -30,7 +30,6 @@ Candy.Core.Action = (function(self, Strophe, $) {
 		 *   (jQuery.element) msg - jQuery element
 		 */
 		Version: function(msg) {
-<<<<<<< HEAD
 			//Candy.Core.getConnection().send($iq({type: 'result', to: msg.attr('from'), from: msg.attr('to'), id: msg.attr('id')}).c('query', {name: Candy.about.name, version: Candy.about.version, os: navigator.userAgent}));
 		 	if(msg.attr('type') == 'get') {
 	            var stanza = $iq({type: 'result', to: msg.attr('from'), from: msg.attr('to'), id: msg.attr('id')})
@@ -63,10 +62,6 @@ Candy.Core.Action = (function(self, Strophe, $) {
 				avatars[msg.attr('from')] = msg.find("vCard").find('BINVAL').text();
 			}
 
-			//Candy.Core.getConnection().send($iq({type: 'get', to: 'warcode@deny.io', from: Candy.Core.getUser().getJid(), id: '1'}).c('vCard', {xmlns: 'vcard-temp', version: '2.0'}));
-=======
-			//Candy.Core.getConnection().send($iq({type: 'result', to: msg.attr('from'), from: msg.attr('to'), id: msg.attr('id')}).c('query', {name: Candy.about.name, version: Candy.about.version, os: navigator.userAgent }));
-			//Candy.Core.getConnection().send($iq({type: 'result', to: msg.attr('from'), from: msg.attr('to'), id: msg.attr('id')}).c('query', {xmlns: 'jabber:iq:version'}).c('name', {Candy.about.name}).c('version', {Candy.about.version}).c('os', {navigator.userAgent}));
 			if(msg.attr('type') == 'get') {
 				var stanza = $iq({type: 'result', to: msg.attr('from'), from: msg.attr('to'), id: msg.attr('id')})
 				.c('query', {xmlns: 'jabber:iq:version'})
@@ -79,7 +74,6 @@ Candy.Core.Action = (function(self, Strophe, $) {
 				.c('photo', 'test');
 				Candy.Core.getConnection().send(stanza);
 			}
->>>>>>> e7282424c588fe068bf72548cdea14153b642413
 		},
 
 		/** Function: Roster

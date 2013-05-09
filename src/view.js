@@ -73,10 +73,6 @@ Candy.View = (function(self, $) {
 		 */
 		_registerWindowHandlers = function() {
 			// Cross-browser focus handling
-<<<<<<< HEAD
-=======
-			
->>>>>>> e7282424c588fe068bf72548cdea14153b642413
 			$(window).focus(Candy.View.Pane.Window.onFocus).blur(Candy.View.Pane.Window.onBlur);
 			$(window).resize(Candy.View.Pane.Chat.fitTabs);
 		},
