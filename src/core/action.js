@@ -69,11 +69,12 @@ Candy.Core.Action = function (self, Strophe, $) {
 
             if (msg.attr('type') == 'result') {
                 Candy.Core.log("VCard - result");
-                var avatars = Candy.Core.getUser().getCustomData();
-                Candy.Core.log(avatars);
-                if(avatars['avatar'] == null) {
-                    avatars['avatar'] = {};
+                var customData = Candy.Core.getUser().getCustomData();
+                Candy.Core.log(customData);
+                if(customData['avatar'] == null) {
+                    customData['avatar'] = {};
                 }
+                var avatars = customData['avatar'];
                 avatars[msg.attr('from')] = msg.find("vCard").find('BINVAL').text();
                 Candy.Core.getUser().setCustomData(avatars);
             }
