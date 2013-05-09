@@ -30,7 +30,39 @@ Candy.Core.Action = (function(self, Strophe, $) {
 		 *   (jQuery.element) msg - jQuery element
 		 */
 		Version: function(msg) {
-			Candy.Core.getConnection().send($iq({type: 'result', to: msg.attr('from'), from: msg.attr('to'), id: msg.attr('id')}).c('query', {name: Candy.about.name, version: Candy.about.version, os: navigator.userAgent}));
+			//Candy.Core.getConnection().send($iq({type: 'result', to: msg.attr('from'), from: msg.attr('to'), id: msg.attr('id')}).c('query', {name: Candy.about.name, version: Candy.about.version, os: navigator.userAgent}));
+		 	if(msg.attr('type') == 'get') {
+	            var stanza = $iq({type: 'result', to: msg.attr('from'), from: msg.attr('to'), id: msg.attr('id')})
+	            .c('query', {xmlns: 'jabber:iq:version'})
+	            .c('name', Candy.about.name)
+	            .up()
+	            .c('version', Candy.about.version)
+	            .up()
+	            .c('os', navigator.userAgent)
+	            .up()
+	            .c('photo', 'test');
+	            Candy.Core.getConnection().send(stanza);
+            }
+		},
+
+		VCard: function(msg) {
+
+			if(msg.attr('type') == 'get') {
+				var stanza = $iq({type: 'result', to: msg.attr('from'), from: Candy.Core.getUser().getJid(), id: '1', xmlns: 'jabber:client'})
+						.c('vCard', {xmlns: 'vcard-temp', version: '2.0'})
+						.c('PHOTO')
+						.c('TYPE', 'image/png')
+						.up()
+						.c('BINVAL', Candy.Core.getUser().getCustomData()['avatar']);
+				Candy.Core.getConnection().send(stanza);
+			}
+
+			if(msg.attr('type') == 'result') {
+				var avatars = Candy.Core.getUser().getCustomData()['avatar']);
+				avatars[msg.attr('from')] = msg.find("vCard").find('BINVAL').text();
+			}
+
+			//Candy.Core.getConnection().send($iq({type: 'get', to: 'warcode@deny.io', from: Candy.Core.getUser().getJid(), id: '1'}).c('vCard', {xmlns: 'vcard-temp', version: '2.0'}));
 		},
 
 		/** Function: Roster

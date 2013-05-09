@@ -123,6 +123,12 @@ Candy.Core.Event = (function(self, Strophe, $) {
 			return true;
 		},
 
+		VCard : function(msg) {
+			Candy.Core.log('[Jabber] VCard');
+			Candy.Core.Action.Jabber.VCard($(msg));
+			return true;
+		},
+
 		/** Function: Presence
 		 * Acts on a presence event
 		 *
