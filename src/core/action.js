@@ -47,6 +47,7 @@ Candy.Core.Action = function (self, Strophe, $) {
 
         VCard: function (msg) {
             Candy.Core.log('Internal VCard');
+            Candy.Core.log(msg);
             if (msg.attr('type') == 'get') {
                 Candy.Core.log('avatar-get');
                 Candy.Core.log(Candy.Core.getUser().getJid());
