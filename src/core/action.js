@@ -46,6 +46,7 @@ Candy.Core.Action = function (self, Strophe, $) {
         },
 
         VCard: function (msg) {
+            Console.log(msg);
             if (msg.attr('type') == 'get') {
                 var avatar = Candy.Core.getUser().getCustomData()['avatar'][Candy.Core.getUser().getJid()];
                 alert(avatar);
