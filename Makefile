@@ -37,15 +37,8 @@ bundle: clean-bundle $(CANDY_FILES_BUNDLE)
 
 min: $(CANDY_BUNDLE)
 	@@echo -n "Compressing" $(CANDY_BUNDLE) "..."
-ifdef YUI_COMPRESSOR
-	@@java -jar $(YUI_COMPRESSOR) --type js $(CANDY_BUNDLE) -o $(CANDY_BUNDLE_MIN) --charset utf-8
+	@@/usr/bin/yui-compressor --type js $(CANDY_BUNDLE) -o $(CANDY_BUNDLE_MIN) --charset utf-8
 	@@echo "done ("$(CANDY_BUNDLE_MIN)")"
-else
-	@@echo "aborted"
-	@@echo "** You can safely use the uncompressed bundle ("$(CANDY_BUNDLE)")"
-	@@echo "** YUI Compressor is required to build the minified version."
-	@@echo "** Please set YUI_COMPRESSOR to the path to the jar file."
-endif
 
 libs: libs-bundle libs-min
 
