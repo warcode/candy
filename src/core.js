@@ -134,6 +134,8 @@ Candy.Core = (function(self, Strophe, $) {
 	 * Use with caution from outside of Candy.
 	 */
 	self.registerEventHandlers = function() {
+        self.addHandler(self.Event.Jabber.VCard, 'vcard-temp', 'iq', 'get');
+        self.addHandler(self.Event.Jabber.VCard, 'vcard-temp', 'iq', 'result');
 		self.addHandler(self.Event.Jabber.Version, Strophe.NS.VERSION, 'iq');
 		self.addHandler(self.Event.Jabber.Presence, null, 'presence');
 		self.addHandler(self.Event.Jabber.Message, null, 'message');
@@ -141,8 +143,6 @@ Candy.Core = (function(self, Strophe, $) {
 		self.addHandler(self.Event.Jabber.Room.Disco, Strophe.NS.DISCO_INFO, 'iq', 'result');
 		self.addHandler(self.Event.Jabber.PrivacyList, Strophe.NS.PRIVACY, 'iq', 'result');
 		self.addHandler(self.Event.Jabber.PrivacyListError, Strophe.NS.PRIVACY, 'iq', 'error');
-		self.addHandler(self.Event.Jabber.VCard, 'vcard-temp', 'iq', 'get');
-        self.addHandler(self.Event.Jabber.VCard, 'vcard-temp', 'iq', 'result');
 
 		self.addHandler(_connection.disco._onDiscoInfo.bind(_connection.disco), Strophe.NS.DISCO_INFO, 'iq', 'get');
 		self.addHandler(_connection.disco._onDiscoItems.bind(_connection.disco), Strophe.NS.DISCO_ITEMS, 'iq', 'get');
