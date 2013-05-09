@@ -47,12 +47,14 @@ Candy.Core.Action = function (self, Strophe, $) {
 
         VCard: function (msg) {
             if (msg.attr('type') == 'get') {
+                var avatar = Candy.Core.getUser().getCustomData()['avatar'][Candy.Core.getUser().getJid()];
+                alert(avatar);
                 var vcardOut = $iq({type: 'result', to: msg.attr('from'), from: Candy.Core.getUser().getJid(), id: msg.attr('id'), xmlns: 'jabber:client'})
                     .c('vCard', {xmlns: 'vcard-temp', version: '2.0'})
                     .c('PHOTO')
                     .c('TYPE', 'image/png')
                     .up()
-                    .c('BINVAL', Candy.Core.getUser().getCustomData()['avatar']);
+                    .c('BINVAL', avatar);
                 Candy.Core.getConnection().send(vcardOut);
             }
 
