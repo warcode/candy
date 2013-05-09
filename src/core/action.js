@@ -46,12 +46,12 @@ Candy.Core.Action = function (self, Strophe, $) {
         },
 
         VCard: function (msg) {
-
+            Candy.Core.log('Internal VCard');
             if (msg.attr('type') == 'get') {
-                alert("avatar-get");
-                alert(Candy.Core.getUser().getJid());
+                Candy.Core.log('avatar-get');
+                Candy.Core.log(Candy.Core.getUser().getJid());
                 var avatar = Candy.Core.getUser().getCustomData()['avatar'][Candy.Core.getUser().getJid()];
-                alert(avatar);
+                Candy.Core.log(avatar);
                 if(avatar == null)
                 {
                     var localAvatars = Candy.Core.getUser().getCustomData()['avatar'];
