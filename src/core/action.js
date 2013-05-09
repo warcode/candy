@@ -70,6 +70,7 @@ Candy.Core.Action = function (self, Strophe, $) {
             if (msg.attr('type') == 'result') {
                 Candy.Core.log("VCard - result");
                 var avatars = Candy.Core.getUser().getCustomData()['avatar'];
+                Candy.Core.log(avatars);
                 avatars[msg.attr('from')] = msg.find("vCard").find('BINVAL').text();
                 Candy.Core.getUser().setCustomData(avatars);
             }
