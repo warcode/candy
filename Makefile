@@ -22,7 +22,7 @@ CANDY_BUNDLE_MIN = candy.min.js
 CANDY_BUNDLE_LIBRARIES = libs/libs.bundle.js
 CANDY_BUNDLE_LIBRARIES_MIN = libs/libs.min.js
 CANDY_FILES = $(SRC_DIR)/candy.js $(SRC_DIR)/core.js $(SRC_DIR)/view.js $(SRC_DIR)/util.js $(SRC_DIR)/core/action.js $(SRC_DIR)/core/chatRoom.js $(SRC_DIR)/core/chatRoster.js $(SRC_DIR)/core/chatUser.js $(SRC_DIR)/core/event.js $(SRC_DIR)/view/event.js $(SRC_DIR)/view/observer.js $(SRC_DIR)/view/pane.js $(SRC_DIR)/view/template.js $(SRC_DIR)/view/translation.js
-CANDY_LIBS_FILES = $(LIBS_DIR)/strophejs/strophe.js $(LIBS_DIR)/strophejs-plugins/muc/strophe.muc.js $(LIBS_DIR)/mustache.js/mustache.js $(LIBS_DIR)/jquery-i18n/jquery.i18n.js $(LIBS_DIR)/strophejs-plugins/disco/strophe.disco.js $(LIBS_DIR)/strophejs-plugins/caps/strophe.caps.jsonly.js $(LIBS_DIR)/dateformat/dateFormat.js
+CANDY_LIBS_FILES = $(LIBS_DIR)/strophejs/strophe.js $(LIBS_DIR)/strophejs-plugins/muc/strophe.muc.js $(LIBS_DIR)/mustache.js/mustache.js $(LIBS_DIR)/jquery-i18n/jquery.i18n.js $(LIBS_DIR)/strophejs-plugins/disco/strophe.disco.js $(LIBS_DIR)/strophejs-plugins/caps/strophe.caps.jsonly.js $(LIBS_DIR)/dateformat/dateFormat.js $(LIBS_DIR)/strophejs-plugins/vcard/strophe.vcard.js
 CANDY_FILES_BUNDLE = $(CANDY_FILES:.js=.bundle)
 CANDY_LIBS_FILES_BUNDLE = $(CANDY_LIBS_FILES:.js=.libs-bundle)
 
@@ -37,15 +37,8 @@ bundle: clean-bundle $(CANDY_FILES_BUNDLE)
 
 min: $(CANDY_BUNDLE)
 	@@echo -n "Compressing" $(CANDY_BUNDLE) "..."
-ifdef YUI_COMPRESSOR
-	@@java -jar $(YUI_COMPRESSOR) --type js $(CANDY_BUNDLE) -o $(CANDY_BUNDLE_MIN) --charset utf-8
+	@@/usr/bin/yui-compressor --type js $(CANDY_BUNDLE) -o $(CANDY_BUNDLE_MIN) --charset utf-8
 	@@echo "done ("$(CANDY_BUNDLE_MIN)")"
-else
-	@@echo "aborted"
-	@@echo "** You can safely use the uncompressed bundle ("$(CANDY_BUNDLE)")"
-	@@echo "** YUI Compressor is required to build the minified version."
-	@@echo "** Please set YUI_COMPRESSOR to the path to the jar file."
-endif
 
 libs: libs-bundle libs-min
 
