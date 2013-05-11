@@ -46,36 +46,17 @@ Candy.Core.Action = function (self, Strophe, $) {
         },
 
         VCard: function (msg) {
-            Candy.Core.log('Internal VCard');
-            Candy.Core.log(msg);
-            if (msg.attr('type') == 'get') {
-                Candy.Core.log('avatar-get');
-                Candy.Core.log(Candy.Core.getUser().getJid());
-                var avatar = Candy.Core.getUser().getCustomData()['avatar'][Candy.Core.getUser().getJid()];
-                Candy.Core.log(avatar);
-                if(avatar == null)
-                {
-                    var localAvatars = Candy.Core.getUser().getCustomData()['avatar'];
-                    localAvatars[Candy.Core.getUser().getJid()] = Candy.Util.base64Image('https://deny.io/chat/hakase80x80.jpg');
-                }
-                var vcardOut = $iq({type: 'result', to: msg.attr('from'), from: Candy.Core.getUser().getJid(), id: msg.attr('id'), xmlns: 'jabber:client'})
-                    .c('vCard', {xmlns: 'vcard-temp', version: '2.0'})
-                    .c('PHOTO')
-                    .c('TYPE', 'image/png')
-                    .up()
-                    .c('BINVAL', avatar);
-                Candy.Core.getConnection().send(vcardOut);
-            }
 
             if (msg.attr('type') == 'result') {
-                Candy.Core.log("VCard - result");
                 var customData = Candy.Core.getUser().getCustomData();
-                Candy.Core.log(customData);
+
                 if(customData['avatar'] == null) {
                     customData['avatar'] = {};
                 }
+
                 var avatars = customData['avatar'];
                 avatars[msg.attr('from')] = msg.find("vCard").find('BINVAL').text();
+
                 Candy.Core.getUser().setCustomData(customData);
             }
 
